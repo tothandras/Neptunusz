@@ -6,7 +6,6 @@ import com.neptunusz.model.service.SubjectService;
 import com.neptunusz.model.service.SubjectServiceFactory;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.List;
 
 public class SubjectsData extends AbstractTableModel {
 
@@ -62,29 +61,22 @@ public class SubjectsData extends AbstractTableModel {
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        subjectService.getSubjects().get(rowIndex).setRegister((Boolean) aValue);
+        try {
+            subjectService.get(rowIndex).setRegister((Boolean) aValue);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void addSubject(String name, String code, SubjectType type) {
+        //TODO add to the subjectservice
         subjectService.getSubjects().add(new Subject(name, code, type));
         fireTableRowsInserted(0, subjectService.getSubjects().size());
     }
 
     public void deleteSubject(int rowIndex) {
+        //TODO add to the subjectservice
         subjectService.getSubjects().remove(rowIndex);
         fireTableRowsDeleted(0, subjectService.getSubjects().size());
-    }
-
-    public void addCourse(int rowIndex, String course) {
-        //TODO add exception when theres no selected subject
-        subjectService.getSubjects().get(rowIndex).addCourse(course);
-        fireTableRowsUpdated(rowIndex, rowIndex);
-    }
-
-    public void setSubjects(List<Subject> subjects) {
-        // this.subjects = subjects causes error
-        // input object is an unmodifiable list
-        this.subjectService.getSubjects().clear();
-        this.subjectService.getSubjects().addAll(subjects);
     }
 }

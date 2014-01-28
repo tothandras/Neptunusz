@@ -122,9 +122,20 @@ public class NeptunuszDialog extends JDialog {
     }
 
     private void onAddCourse() {
-        dataModel.addCourse(subjectsTable.getSelectedRow(), courseField.getText());
-        // reset field
-        courseField.setText("");
+        try {
+            int selectedRow = subjectsTable.getSelectedRow();
+            String text = courseField.getText();
+
+            //Add the course
+            subjectService.get(selectedRow).addCourse(text);
+
+            //Change table
+            dataModel.fireTableCellUpdated(selectedRow, Colums.CUORSES.ordinal());
+            courseField.setText("");
+        } catch (Exception e) {
+            //No such subject
+            e.printStackTrace();
+        }
     }
 
     private void onOK() {
