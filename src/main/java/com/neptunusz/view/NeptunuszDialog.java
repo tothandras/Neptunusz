@@ -134,7 +134,7 @@ public class NeptunuszDialog extends JDialog {
             subjectService.get(selectedRow).addCourse(text);
 
             //Change table
-            dataModel.fireTableCellUpdated(selectedRow, Colums.CUORSES.ordinal());
+            dataModel.fireTableCellUpdated(selectedRow, Columns.CUORSES.ordinal());
             courseField.setText("");
         } catch (Exception e) {
             //No such subject

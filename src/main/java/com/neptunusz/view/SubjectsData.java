@@ -46,12 +46,12 @@ public class SubjectsData extends AbstractTableModel {
 
     @Override
     public String getColumnName(int column) {
-        return Colums.values()[column].getName();
+        return Columns.values()[column].getName();
     }
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-        return Colums.values()[columnIndex].getClazz();
+        return Columns.values()[columnIndex].getClazz();
     }
 
     @Override
