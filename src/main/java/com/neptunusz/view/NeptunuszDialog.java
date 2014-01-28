@@ -1,6 +1,6 @@
 package com.neptunusz.view;
 
-import com.neptunusz.Neptun;
+import com.neptunusz.controller.Neptun;
 import com.neptunusz.model.Subject;
 import com.neptunusz.model.SubjectType;
 import com.neptunusz.model.service.SubjectService;

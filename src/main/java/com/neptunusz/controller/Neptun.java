@@ -1,4 +1,4 @@
-package com.neptunusz;
+package com.neptunusz.controller;
 
 import com.neptunusz.model.Subject;
 import org.openqa.selenium.By;
