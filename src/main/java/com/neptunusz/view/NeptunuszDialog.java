@@ -95,30 +95,34 @@ public class NeptunuszDialog extends JDialog {
     }
 
     private void onAddSubject() {
-        SubjectType type;
-        switch (subjectTypeComboBox.getSelectedIndex()) {
-            case 0:
-                type = SubjectType.CURRICULUM;
-                break;
-            case 1:
-                type = SubjectType.OPTIONAL;
-                break;
-            default:
-                type = SubjectType.ALL;
-                break;
-        }
-        dataModel.addSubject(subjectNameField.getText(), subjectCodeField.getText(), type);
+        //Add new subject
+        SubjectType type = SubjectType.values()[subjectTypeComboBox.getSelectedIndex()];
+        Subject subject = new Subject(subjectNameField.getText(), subjectCodeField.getText(), type);
+        subjectService.getSubjects().add(subject);
+
         // reset fields
         subjectNameField.setText("");
         subjectCodeField.setText("");
         if (!courseField.getText().isEmpty()) {
-            dataModel.addCourse(dataModel.getRowCount() - 1, courseField.getText());
+            //add course if not empty
+            subject.addCourse(courseField.getText());
             courseField.setText("");
         }
+
+        //Refresh table
+        int row = subjectService.getSubjects().size();
+        dataModel.fireTableRowsInserted(row, row);
     }
 
     private void onRemove() {
-        dataModel.deleteSubject(subjectsTable.getSelectedRow());
+        int selectedRow = subjectsTable.getSelectedRow();
+        try {
+            Subject subject = subjectService.get(selectedRow);
+            subjectService.getSubjects().remove(subject);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        dataModel.fireTableRowsDeleted(selectedRow, selectedRow);
     }
 
     private void onAddCourse() {

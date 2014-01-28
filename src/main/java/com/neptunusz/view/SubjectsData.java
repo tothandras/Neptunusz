@@ -67,16 +67,4 @@ public class SubjectsData extends AbstractTableModel {
             e.printStackTrace();
         }
     }
-
-    public void addSubject(String name, String code, SubjectType type) {
-        //TODO add to the subjectservice
-        subjectService.getSubjects().add(new Subject(name, code, type));
-        fireTableRowsInserted(0, subjectService.getSubjects().size());
-    }
-
-    public void deleteSubject(int rowIndex) {
-        //TODO add to the subjectservice
-        subjectService.getSubjects().remove(rowIndex);
-        fireTableRowsDeleted(0, subjectService.getSubjects().size());
-    }
 }

@@ -37,7 +37,7 @@ public class SubjectService {
     }
 
     public Subject get(int index) throws Exception {
-        if (subjects.size() >= index) throw new Exception();
+        if (subjects.size() <= index) throw new Exception();
         return subjects.get(index);
     }
 }
