@@ -76,6 +76,7 @@ public class SubjectsData extends AbstractTableModel {
     }
 
     public void addCourse(int rowIndex, String course) {
+        //TODO add exception when theres no selected subject
         subjectService.getSubjects().get(rowIndex).addCourse(course);
         fireTableRowsUpdated(rowIndex, rowIndex);
     }
