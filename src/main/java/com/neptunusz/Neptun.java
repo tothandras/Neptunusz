@@ -1,3 +1,6 @@
+package com.neptunusz;
+
+import com.neptunusz.model.Subject;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -52,7 +55,7 @@ public class Neptun {
         loginned = true;
     }
 
-    public void registrate(Subject subject) {
+    public void register(Subject subject) {
         if (loginned) {
             try {
                 driver.get("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0303");

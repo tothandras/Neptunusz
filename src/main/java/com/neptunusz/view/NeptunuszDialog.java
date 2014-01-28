@@ -1,16 +1,23 @@
+package com.neptunusz.view;
+
+import com.neptunusz.Neptun;
+import com.neptunusz.model.Subject;
+import com.neptunusz.model.SubjectType;
+import com.neptunusz.model.service.SubjectService;
+import com.neptunusz.model.service.SubjectServiceFactory;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
 import javax.swing.*;
-import java.awt.Dimension;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.*;
-import java.util.List;
+import java.io.IOException;
 
 public class NeptunuszDialog extends JDialog {
+    private SubjectsData dataModel;
     private JPanel contentPane;
     private JButton buttonOK;
     private JButton buttonAddSubject;
@@ -24,20 +31,21 @@ public class NeptunuszDialog extends JDialog {
     private JTextField courseField;
     private JButton buttonAddCourse;
 
-    private SubjectsData subjectsData;
+    private SubjectService subjectService = SubjectServiceFactory.getInstance();
 
     public NeptunuszDialog() {
+
+        //Load database
         try {
-            subjectsData = new SubjectsData();
-            File subjectsDataFile = new File("subjects.dat");
-            if (subjectsDataFile.exists()) {
-                ObjectInputStream ois = new ObjectInputStream(new FileInputStream(subjectsDataFile));
-                subjectsData.setSubjects((List<Subject>) ois.readObject());
-                ois.close();
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            subjectService.loadFromFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         }
+
+        //Create dataModel
+        dataModel = new SubjectsData();
 
         setContentPane(contentPane);
         setPreferredSize(new Dimension(750, 400));
@@ -45,7 +53,7 @@ public class NeptunuszDialog extends JDialog {
         setModal(true);
         setTitle("Neptunusz");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        subjectsTable.setModel(subjectsData);
+        subjectsTable.setModel(dataModel);
 
         buttonAddSubject.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -99,22 +107,22 @@ public class NeptunuszDialog extends JDialog {
                 type = SubjectType.ALL;
                 break;
         }
-        subjectsData.addSubject(subjectNameField.getText(), subjectCodeField.getText(), type);
+        dataModel.addSubject(subjectNameField.getText(), subjectCodeField.getText(), type);
         // reset fields
         subjectNameField.setText("");
         subjectCodeField.setText("");
         if (!courseField.getText().isEmpty()) {
-            subjectsData.addCourse(subjectsData.getRowCount()-1, courseField.getText());
+            dataModel.addCourse(dataModel.getRowCount() - 1, courseField.getText());
             courseField.setText("");
         }
     }
 
     private void onRemove() {
-        subjectsData.deleteSubject(subjectsTable.getSelectedRow());
+        dataModel.deleteSubject(subjectsTable.getSelectedRow());
     }
 
     private void onAddCourse() {
-        subjectsData.addCourse(subjectsTable.getSelectedRow(), courseField.getText());
+        dataModel.addCourse(subjectsTable.getSelectedRow(), courseField.getText());
         // reset field
         courseField.setText("");
     }
@@ -127,9 +135,9 @@ public class NeptunuszDialog extends JDialog {
         Neptun neptun = new Neptun(driver);
 
         neptun.login(usernameField.getText().trim(), new String(passwordField.getPassword()));
-        for (Subject subject : subjectsData.getSubjects()) {
+        for (Subject subject : subjectService.getSubjects()) {
             if (subject.isRegister()) {
-                neptun.registrate(subject);
+                neptun.register(subject);
             }
         }
         neptun.registeredSubjects();
@@ -138,13 +146,7 @@ public class NeptunuszDialog extends JDialog {
 
     @Override
     public void dispose() {
-        try {
-            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("subjects.dat"));
-            oos.writeObject(subjectsData.getSubjects());
-            oos.close();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        subjectService.saveToFile();
         super.dispose();
     }
 

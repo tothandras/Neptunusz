@@ -1,23 +1,26 @@
+package com.neptunusz.view;
+
+import com.neptunusz.model.Subject;
+import com.neptunusz.model.SubjectType;
+import com.neptunusz.model.service.SubjectService;
+import com.neptunusz.model.service.SubjectServiceFactory;
+
 import javax.swing.table.AbstractTableModel;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class SubjectsData extends AbstractTableModel {
-    List<Subject> subjects;
 
-    public SubjectsData() {
-        subjects = new ArrayList<Subject>();
-    }
+    //Get the singleton instance
+    SubjectService subjectService = SubjectServiceFactory.getInstance();
 
     @Override
     public int getRowCount() {
-        return subjects.size();
+        return subjectService.getSubjects().size();
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        Subject subject = subjects.get(rowIndex);
+        Subject subject = subjectService.getSubjects().get(rowIndex);
         switch (columnIndex) {
             case 0:
                 return subject.getName();
@@ -44,34 +47,12 @@ public class SubjectsData extends AbstractTableModel {
 
     @Override
     public String getColumnName(int column) {
-        switch (column) {
-            case 0:
-                return "Név";
-            case 1:
-                return "Kód";
-            case 2:
-                return "Típus";
-            case 3:
-                return "Kurzusok";
-            default:
-                return "Felvesz";
-        }
+        return Colums.values()[column].getName();
     }
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-        switch (columnIndex) {
-            case 0:
-                return String.class;
-            case 1:
-                return String.class;
-            case 2:
-                return SubjectType.class;
-            case 3:
-                return String.class;
-            default:
-                return Boolean.class;
-        }
+        return Colums.values()[columnIndex].getClazz();
     }
 
     @Override
@@ -81,32 +62,28 @@ public class SubjectsData extends AbstractTableModel {
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        subjects.get(rowIndex).setRegister((Boolean) aValue);
+        subjectService.getSubjects().get(rowIndex).setRegister((Boolean) aValue);
     }
 
     public void addSubject(String name, String code, SubjectType type) {
-        subjects.add(new Subject(name, code, type));
-        fireTableRowsInserted(0, subjects.size());
+        subjectService.getSubjects().add(new Subject(name, code, type));
+        fireTableRowsInserted(0, subjectService.getSubjects().size());
     }
 
     public void deleteSubject(int rowIndex) {
-        subjects.remove(rowIndex);
-        fireTableRowsDeleted(0, subjects.size());
+        subjectService.getSubjects().remove(rowIndex);
+        fireTableRowsDeleted(0, subjectService.getSubjects().size());
     }
 
     public void addCourse(int rowIndex, String course) {
-        subjects.get(rowIndex).addCourse(course);
+        subjectService.getSubjects().get(rowIndex).addCourse(course);
         fireTableRowsUpdated(rowIndex, rowIndex);
-    }
-
-    public List<Subject> getSubjects() {
-        return Collections.unmodifiableList(subjects);
     }
 
     public void setSubjects(List<Subject> subjects) {
         // this.subjects = subjects causes error
         // input object is an unmodifiable list
-        this.subjects.clear();
-        this.subjects.addAll(subjects);
+        this.subjectService.getSubjects().clear();
+        this.subjectService.getSubjects().addAll(subjects);
     }
 }
