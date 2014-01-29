@@ -2,6 +2,7 @@ package com.neptunusz.controller;
 
 import com.neptunusz.model.Subject;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Cookie;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedCondition;
@@ -9,6 +10,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -19,7 +21,10 @@ public class Neptun {
     public Neptun(WebDriver driver) {
         this.driver = driver;
         driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-        driver.manage().timeouts().pageLoadTimeout(30, TimeUnit.SECONDS);
+        Cookie cookie1 = new Cookie(".ASPXAUTH", "4EC2AF48BEC0F2DF33E83B61877201F7823FFF0648FEBADF680A7654172B0089F2BBB4B35352380D69A1C453B401F55D7691EDE728107116217983ACDF1A22BBEC95CB1F524900B1E79547D9F464C74F42D9B8B1580A874DB82A4FDEF0FBA83F51BF4F15B66C217F4DA4AB50199DEBDF2F5C3A8F0087CCFF87C2CF25E01F6ED2812F16265B3EAEEBAF83C5EF2F102CFD", "frame.neptun.bme.hu", "/", new Date());
+        Cookie cookie2 = new Cookie("ASP.NET_SessionId", "ahp5gdelwsaprrjgfw0cskp3", "frame.neptun.bme.hu", "/", new Date());
+        driver.manage().addCookie(cookie1);
+        driver.manage().addCookie(cookie2);
     }
 
     public void login(String username, String password) {
@@ -52,7 +57,6 @@ public class Neptun {
             // try again
             login(username, password);
         }
-
         loginned = true;
     }
 
@@ -124,6 +128,7 @@ public class Neptun {
                 finishButton.click();
 
                 // OK
+                webDriverWait = new WebDriverWait(driver, 3);
                 WebElement okButton = driver.findElement(By.xpath("//button[@value='OK']"));
                 webDriverWait.until(ExpectedConditions.elementToBeClickable(okButton));
                 okButton.click();
