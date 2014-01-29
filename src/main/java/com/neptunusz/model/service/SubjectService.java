@@ -27,7 +27,7 @@ public class SubjectService {
     public void loadFromFile() throws IOException, ClassNotFoundException {
         if (FILE.exists()) {
             ObjectInputStream ois = new ObjectInputStream(new FileInputStream(FILE));
-            this.subjects = (List<Subject>) ois.readObject();
+            this.subjects.addAll((List<Subject>) ois.readObject());
             ois.close();
         }
     }
