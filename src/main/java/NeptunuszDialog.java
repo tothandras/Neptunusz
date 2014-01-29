@@ -2,7 +2,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
 import javax.swing.*;
-import java.awt.Dimension;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -68,7 +68,7 @@ public class NeptunuszDialog extends JDialog {
 
         buttonOK.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (usernameField.getText().isEmpty() || passwordField.getPassword().length == 0) {
+                if (usernameField.getText().isEmpty() || usernameField.getText().length() != 6 || passwordField.getPassword().length == 0) {
                     JOptionPane.showMessageDialog(null, "Add meg a neptun kódod és jelszavad", "Figyelmeztetés", JOptionPane.PLAIN_MESSAGE);
                 } else {
                     onOK();
@@ -104,19 +104,23 @@ public class NeptunuszDialog extends JDialog {
         subjectNameField.setText("");
         subjectCodeField.setText("");
         if (!courseField.getText().isEmpty()) {
-            subjectsData.addCourse(subjectsData.getRowCount()-1, courseField.getText());
+            subjectsData.addCourse(subjectsData.getRowCount() - 1, courseField.getText());
             courseField.setText("");
         }
     }
 
     private void onRemove() {
-        subjectsData.deleteSubject(subjectsTable.getSelectedRow());
+        if (subjectsTable.getSelectedRow() != -1) {
+            subjectsData.deleteSubject(subjectsTable.getSelectedRow());
+        }
     }
 
     private void onAddCourse() {
-        subjectsData.addCourse(subjectsTable.getSelectedRow(), courseField.getText());
-        // reset field
-        courseField.setText("");
+        if (subjectsTable.getSelectedRow() != -1) {
+            subjectsData.addCourse(subjectsTable.getSelectedRow(), courseField.getText());
+            // reset field
+            courseField.setText("");
+        }
     }
 
     private void onOK() {

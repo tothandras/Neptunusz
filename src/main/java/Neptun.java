@@ -15,12 +15,12 @@ public class Neptun {
 
     public Neptun(WebDriver driver) {
         this.driver = driver;
+        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
     }
 
     public void login(String username, String password) {
         try {
             // Go to the Neptun home page
-            driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
             driver.get("https://frame.neptun.bme.hu/hallgatoi/login.aspx");
 
             // Enter user name

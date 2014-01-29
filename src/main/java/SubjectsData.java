@@ -85,8 +85,11 @@ public class SubjectsData extends AbstractTableModel {
     }
 
     public void addSubject(String name, String code, SubjectType type) {
-        subjects.add(new Subject(name, code, type));
-        fireTableRowsInserted(0, subjects.size());
+        Subject subject = new Subject(name, code, type);
+        if (!subjects.contains(subject)) {
+            subjects.add(subject);
+            fireTableRowsInserted(0, subjects.size());
+        }
     }
 
     public void deleteSubject(int rowIndex) {
