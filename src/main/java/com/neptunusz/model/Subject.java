@@ -49,6 +49,11 @@ public class Subject implements Serializable {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        return obj instanceof Subject && this.code.equals(((Subject)obj).code);
+    }
+
+    @Override
     public String toString() {
         return "Subject{name: " + name + ", code: " + code + ", type: " + type + "}";
     }
