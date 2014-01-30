@@ -1,10 +1,8 @@
 package com.neptunusz.controller;
 
 import com.neptunusz.model.Subject;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Cookie;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -25,15 +23,19 @@ public class Neptun {
         try {
             // Go to the Neptun home page
             driver.get("https://frame.neptun.bme.hu/hallgatoi/login.aspx");
+            WebDriverWait webDriverWait;
+
+            /*
             Cookie cookie1 = new Cookie(".ASPXAUTH", "FA3543F06887348A7AFC2FDBBD043AC32CC6907DE5081683AC5465816752B41BC2664804E60CA707ED12DF9691EFE01A64CA880E40FFF1D935C5FF13EBA71A153F8985B3178984DCC1C17DD5F693865E52DA1355F906389D0B783DFC7B8702B4CF7D58A64555CB4FC7422F7330EE00DCE45901C511615A974545758DA5ABD23A2FC7D457125A8A0196C307C92B3BD52C", "frame.neptun.bme.hu", "/", null);
             Cookie cookie2 = new Cookie("ASP.NET_SessionId", "5gho5fipcekh3pzee134fjo2", "frame.neptun.bme.hu", "/", null);
             driver.manage().addCookie(cookie1);
             driver.manage().addCookie(cookie2);
             driver.get("https://frame.neptun.bme.hu/hallgatoi/main.aspx");
+            */
 
             System.out.println(driver.manage().getCookies());
 
-            /*// Enter user name
+            // Enter user name
             WebElement user = driver.findElement(By.name("user"));
             user.sendKeys(username);
 
@@ -44,14 +46,23 @@ public class Neptun {
             WebElement button = driver.findElement(By.name("btnSubmit"));
             button.click();
 
+            webDriverWait = new WebDriverWait(driver, 2);
+            try {
+                webDriverWait.until(ExpectedConditions.alertIsPresent());
+                Alert alert = driver.switchTo().alert();
+                alert.accept();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             ExpectedCondition<Boolean> expectedCondition = new ExpectedCondition<Boolean>() {
                 public Boolean apply(WebDriver driver) {
                     return (driver.getCurrentUrl().equals("https://frame.neptun.bme.hu/hallgatoi/main.aspx"));
                 }
             };
 
-            WebDriverWait webDriverWait = new WebDriverWait(driver, 400);
-            webDriverWait.until(expectedCondition);*/
+            webDriverWait = new WebDriverWait(driver, 400);
+            webDriverWait.until(expectedCondition);
 
         } catch (Exception e) {
             e.printStackTrace();
