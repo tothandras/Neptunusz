@@ -15,10 +15,13 @@ public class Neptun {
 
     private WebDriver driver;
     private boolean loginned;
+    private String semester;
 
     public Neptun(WebDriver driver) {
         this.driver = driver;
         driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+
+        this.semester = "2013/14/2";
     }
 
     public void login(String username, String password) {
@@ -55,7 +58,9 @@ public class Neptun {
             calendar.set(2014, Calendar.JANUARY, 30, 18, 0, 0);
             long diff = calendar.getTimeInMillis() - timeInMillis;
 
-            Thread.sleep(diff);
+            if (diff > 0) {
+                Thread.sleep(diff);
+            }
 
             // Click on Login
             WebElement button = driver.findElement(By.name("btnSubmit"));
@@ -98,7 +103,7 @@ public class Neptun {
 
                 // Select semester
                 Select select = new Select(driver.findElement(By.id("upFilter_cmbTerms")));
-                select.selectByVisibleText("2013/14/2");
+                select.selectByVisibleText(semester);
 
                 // Select subject type
                 WebElement radioButton;
@@ -170,7 +175,7 @@ public class Neptun {
 
         // Select semester
         Select select = new Select(driver.findElement(By.id("cmb_cmb")));
-        select.selectByVisibleText("2013/14/2 (aktuális félév)");
+        select.selectByVisibleText(semester + " (aktuális félév)");
 
         // List subjects
         WebElement button = driver.findElement(By.id("upFilter_expandedsearchbutton"));
