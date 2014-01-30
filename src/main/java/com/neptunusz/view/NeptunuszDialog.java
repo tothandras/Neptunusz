@@ -36,6 +36,9 @@ public class NeptunuszDialog extends JDialog {
 
     public NeptunuszDialog() {
 
+        //Exit on close
+        this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
         //Load database
         try {
             subjectService.loadFromFile();
@@ -164,32 +167,15 @@ public class NeptunuszDialog extends JDialog {
     }
 
     private void onOK() {
-        dispose();
-
-        WebDriver driver = new FirefoxDriver();
-
-        Neptun neptun = new Neptun(driver);
-
-        neptun.login(usernameField.getText().trim(), new String(passwordField.getPassword()));
-        for (Subject subject : subjectService.getSubjects()) {
-            if (subject.isRegister()) {
-                neptun.register(subject);
-            }
-        }
-        neptun.registeredSubjects();
-
+        this.setVisible(false);
+        subjectService.register(usernameField.getText().trim(), new String(passwordField.getPassword()));
+        this.setVisible(true);
     }
 
     @Override
     public void dispose() {
         subjectService.saveToFile();
-        super.dispose();
-    }
-
-    public static void main(String[] args) {
-        NeptunuszDialog dialog = new NeptunuszDialog();
-        dialog.pack();
-        dialog.setVisible(true);
         System.exit(0);
+        super.dispose();
     }
 }

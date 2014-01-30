@@ -1,6 +1,9 @@
 package com.neptunusz.model.service;
 
+import com.neptunusz.controller.Neptun;
 import com.neptunusz.model.Subject;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -41,5 +44,32 @@ public class SubjectService {
     public Subject get(int index) throws Exception {
         if (subjects.size() <= index) throw new Exception();
         return subjects.get(index);
+    }
+
+    /**
+     * Register all subjects with the given username and password
+     *
+     * @param username
+     * @param password
+     */
+    public void register(String username, String password) {
+
+        System.out.println("Opening firefox");
+        WebDriver driver = new FirefoxDriver();
+        Neptun neptun = new Neptun(driver);
+
+        System.out.println("Logging in");
+        neptun.login(username, password);
+
+        System.out.println("Registering subjects...");
+        for (Subject subject : subjects) {
+            if (subject.isRegister()) {
+                System.out.println(" - Registering " + subject);
+                neptun.register(subject);
+                System.out.println(" - " + subject + " successfully registered!");
+            }
+        }
+        neptun.registeredSubjects();
+        System.out.println("Done!");
     }
 }
