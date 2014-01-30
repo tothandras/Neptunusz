@@ -121,7 +121,6 @@ public class NeptunuszDialog extends JDialog {
         }
 
         //Refresh table
-        int row = subjectService.getSubjects().size();
         dataModel.fireTableDataChanged();
     }
 
