@@ -34,6 +34,8 @@ public class SubjectsData extends AbstractTableModel {
                     courses += " " + course;
                 }
                 return courses;
+            case 4:
+                return subject.getPriority();
             default:
                 return subject.isRegister();
         }
@@ -41,7 +43,7 @@ public class SubjectsData extends AbstractTableModel {
 
     @Override
     public int getColumnCount() {
-        return 5;
+        return 6;
     }
 
     @Override
@@ -56,13 +58,20 @@ public class SubjectsData extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return columnIndex == 4;
+        return columnIndex == 4 || columnIndex == 5;
     }
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         try {
-            subjectService.get(rowIndex).setRegister((Boolean) aValue);
+            switch (columnIndex) {
+                case 4:
+                    subjectService.get(rowIndex).setPriority((Integer) aValue);
+                    break;
+                case 5:
+                    subjectService.get(rowIndex).setRegister((Boolean) aValue);
+                    break;
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

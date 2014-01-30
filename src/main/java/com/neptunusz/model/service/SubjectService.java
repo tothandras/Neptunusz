@@ -4,6 +4,8 @@ import com.neptunusz.model.Subject;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -33,6 +35,12 @@ public class SubjectService {
     }
 
     public List<Subject> getSubjects() {
+        Collections.sort(subjects, new Comparator<Subject>() {
+            @Override
+            public int compare(Subject o1, Subject o2) {
+                return ((Integer)o2.getPriority()).compareTo(o1.getPriority());
+            }
+        });
         return subjects;
     }
 

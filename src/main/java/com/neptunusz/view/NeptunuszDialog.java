@@ -30,6 +30,7 @@ public class NeptunuszDialog extends JDialog {
     private JTextField subjectNameField;
     private JTextField courseField;
     private JButton buttonAddCourse;
+    private JButton buttonClearCourses;
 
     private SubjectService subjectService = SubjectServiceFactory.getInstance();
 
@@ -65,6 +66,13 @@ public class NeptunuszDialog extends JDialog {
             @Override
             public void actionPerformed(ActionEvent e) {
                 onAddCourse();
+            }
+        });
+
+        buttonClearCourses.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                onClearCourses();
             }
         });
 
@@ -134,8 +142,21 @@ public class NeptunuszDialog extends JDialog {
             subjectService.get(selectedRow).addCourse(text);
 
             //Change table
-            dataModel.fireTableCellUpdated(selectedRow, Columns.CUORSES.ordinal());
+            dataModel.fireTableCellUpdated(selectedRow, Columns.COURSES.ordinal());
             courseField.setText("");
+        } catch (Exception e) {
+            //No such subject
+            e.printStackTrace();
+        }
+    }
+
+    private void onClearCourses() {
+        try {
+            int selectedRow = subjectsTable.getSelectedRow();
+            subjectService.get(selectedRow).clearCourses();
+
+            //Change table
+            dataModel.fireTableCellUpdated(selectedRow, Columns.COURSES.ordinal());
         } catch (Exception e) {
             //No such subject
             e.printStackTrace();

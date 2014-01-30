@@ -7,6 +7,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -32,8 +33,6 @@ public class Neptun {
             driver.manage().addCookie(cookie2);
             driver.get("https://frame.neptun.bme.hu/hallgatoi/main.aspx");
             */
-
-            System.out.println(driver.manage().getCookies());
 
             // Enter user name
             WebElement user = driver.findElement(By.name("user"));
@@ -140,18 +139,25 @@ public class Neptun {
                 finishButton.click();
 
                 // OK
-                webDriverWait = new WebDriverWait(driver, 3);
+                driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+                webDriverWait = new WebDriverWait(driver, 1);
                 WebElement okButton = driver.findElement(By.xpath("//button[@value='OK']"));
                 webDriverWait.until(ExpectedConditions.elementToBeClickable(okButton));
                 okButton.click();
 
             } catch (Exception e) {
                 e.printStackTrace();
+            } finally {
+                driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
             }
         }
     }
 
     public void registeredSubjects() {
-        driver.get("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0303");
+        driver.get("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0304");
+        Select select = new Select(driver.findElement(By.id("cmb_cmb")));
+        select.selectByVisibleText("2013/14/2 (aktuális félév)");
+        WebElement button = driver.findElement(By.id("upFilter_expandedsearchbutton"));
+        button.click();
     }
 }
