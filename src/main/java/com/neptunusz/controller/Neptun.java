@@ -25,18 +25,18 @@ public class Neptun {
             driver.get("https://frame.neptun.bme.hu/hallgatoi/login.aspx");
             WebDriverWait webDriverWait;
 
-            /*
-            Cookie cookie1 = new Cookie(".ASPXAUTH", "FA3543F06887348A7AFC2FDBBD043AC32CC6907DE5081683AC5465816752B41BC2664804E60CA707ED12DF9691EFE01A64CA880E40FFF1D935C5FF13EBA71A153F8985B3178984DCC1C17DD5F693865E52DA1355F906389D0B783DFC7B8702B4CF7D58A64555CB4FC7422F7330EE00DCE45901C511615A974545758DA5ABD23A2FC7D457125A8A0196C307C92B3BD52C", "frame.neptun.bme.hu", "/", null);
-            Cookie cookie2 = new Cookie("ASP.NET_SessionId", "5gho5fipcekh3pzee134fjo2", "frame.neptun.bme.hu", "/", null);
+            // Type your cookies here if you have any
+            Cookie cookie1 = new Cookie(".ASPXAUTH", "here", "frame.neptun.bme.hu", "/", null);
+            Cookie cookie2 = new Cookie("ASP.NET_SessionId", "and here", "frame.neptun.bme.hu", "/", null);
             driver.manage().addCookie(cookie1);
             driver.manage().addCookie(cookie2);
             driver.get("https://frame.neptun.bme.hu/hallgatoi/main.aspx");
-            */
 
             JavascriptExecutor javascriptExecutor = (JavascriptExecutor) driver;
             javascriptExecutor.executeScript("maxtrynumber = 1e6;");
             javascriptExecutor.executeScript("starttimer = function() {login_wait_timer = setInterval('docheck()', 1250);}");
 
+            driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
             // Enter user name
             WebElement user = driver.findElement(By.name("user"));
             user.sendKeys(username);
@@ -68,9 +68,13 @@ public class Neptun {
 
         } catch (Exception e) {
             e.printStackTrace();
-            // try again
-            login(username, password);
+            // try again if not loginned
+            if (!driver.getCurrentUrl().equals("https://frame.neptun.bme.hu/hallgatoi/main.aspx")) {
+                login(username, password);
+            }
         }
+
+        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
         loginned = true;
     }
 
@@ -141,18 +145,11 @@ public class Neptun {
                 WebElement finishButton = driver.findElement(By.id("function_update1"));
                 finishButton.click();
 
-                // OK
-                driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
-                webDriverWait = new WebDriverWait(driver, 1);
-                WebElement okButton = driver.findElement(By.xpath("//button[@value='OK']"));
-                webDriverWait.until(ExpectedConditions.elementToBeClickable(okButton));
-                okButton.click();
-
             } catch (Exception e) {
                 e.printStackTrace();
-            } finally {
-                driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
             }
+
+            driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
         }
     }
 
@@ -162,11 +159,5 @@ public class Neptun {
         select.selectByVisibleText("2013/14/2 (aktuális félév)");
         WebElement button = driver.findElement(By.id("upFilter_expandedsearchbutton"));
         button.click();
-
-        // keep alive, not sure if its working
-        JavascriptExecutor javascriptExecutor = (JavascriptExecutor) driver;
-        javascriptExecutor.executeScript("var keepAlive = function(){window.setTimeout(function() {xmlhttp = new XMLHttpRequest(); xmlhttp.open('GET,'main.aspx',true); xmlhttp.send(); keepAlive()}, 90000 - Math.floor(Math.random() * 30000));}; keepAlive();");
-        javascriptExecutor.executeScript("clearTimeout(timerID1);");
-        javascriptExecutor.executeScript("clearTimeout(timerID2);");
     }
 }

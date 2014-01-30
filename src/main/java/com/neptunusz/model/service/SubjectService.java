@@ -75,6 +75,7 @@ public class SubjectService {
                 System.out.println(" - " + subject + " successfully registered!");
             }
         }
+
         neptun.registeredSubjects();
         System.out.println("Done!");
     }
