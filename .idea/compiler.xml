@@ -25,6 +25,9 @@
         <module name="Neptunusz" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="Neptunusz" target="1.7" />
+    </bytecodeTargetLevel>
   </component>
 </project>
 
