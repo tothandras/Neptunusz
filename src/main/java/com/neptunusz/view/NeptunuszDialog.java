@@ -166,7 +166,7 @@ public class NeptunuszDialog extends JDialog {
         }
     }
 
-    private void onOK() {
+    public void onOK() {
         this.setVisible(false);
         subjectService.register(usernameField.getText().trim(), new String(passwordField.getPassword()));
         this.setVisible(true);
