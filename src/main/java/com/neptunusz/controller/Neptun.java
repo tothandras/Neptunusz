@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 public class Neptun {
 
     private WebDriver driver;
-    private boolean loginned;
+    private boolean loggedIn;
     private String semester;
 
     public Neptun(WebDriver driver) {
@@ -91,11 +91,11 @@ public class Neptun {
 
         }
 
-        loginned = true;
+        loggedIn = true;
     }
 
     public void register(Subject subject) {
-        if (loginned) {
+        if (loggedIn) {
             try {
                 // Go to the subject registration page
                 driver.get("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0303");
