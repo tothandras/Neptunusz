@@ -122,7 +122,7 @@ public class NeptunuszDialog extends JDialog {
 
         //Refresh table
         int row = subjectService.getSubjects().size();
-        dataModel.fireTableRowsInserted(row, row);
+        dataModel.fireTableDataChanged();
     }
 
     private void onRemove() {
