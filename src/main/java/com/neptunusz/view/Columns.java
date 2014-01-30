@@ -7,7 +7,7 @@ import com.neptunusz.model.SubjectType;
  * This enum contains all information about the columns
  */
 public enum Columns {
-    NAME("", String.class), CODE("", String.class), TYPE("", SubjectType.class), COURSES("", String.class), PRIORITY("", Integer.class), ENROLL("", Boolean.class),;
+    NAME("Név", String.class), CODE("Kód", String.class), TYPE("Típus", SubjectType.class), COURSES("Kurzusok", String.class), PRIORITY("Prioritás", Integer.class), ENROLL("Felvesz", Boolean.class),;
 
     private String name;
     private Class clazz;

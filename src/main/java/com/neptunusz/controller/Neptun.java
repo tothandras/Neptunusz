@@ -1,10 +1,7 @@
 package com.neptunusz.controller;
 
 import com.neptunusz.model.Subject;
-import org.openqa.selenium.Alert;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
@@ -35,6 +32,10 @@ public class Neptun {
             driver.manage().addCookie(cookie2);
             driver.get("https://frame.neptun.bme.hu/hallgatoi/main.aspx");
             */
+
+            JavascriptExecutor javascriptExecutor = (JavascriptExecutor) driver;
+            javascriptExecutor.executeScript("maxtrynumber = 1e6;");
+            javascriptExecutor.executeScript("starttimer = function() {login_wait_timer = setInterval('docheck()', 1250);}");
 
             // Enter user name
             WebElement user = driver.findElement(By.name("user"));
@@ -161,5 +162,11 @@ public class Neptun {
         select.selectByVisibleText("2013/14/2 (aktuális félév)");
         WebElement button = driver.findElement(By.id("upFilter_expandedsearchbutton"));
         button.click();
+
+        // keep alive, not sure if its working
+        JavascriptExecutor javascriptExecutor = (JavascriptExecutor) driver;
+        javascriptExecutor.executeScript("var keepAlive = function(){window.setTimeout(function() {xmlhttp = new XMLHttpRequest(); xmlhttp.open('GET,'main.aspx',true); xmlhttp.send(); keepAlive()}, 90000 - Math.floor(Math.random() * 30000));}; keepAlive();");
+        javascriptExecutor.executeScript("clearTimeout(timerID1);");
+        javascriptExecutor.executeScript("clearTimeout(timerID2);");
     }
 }
