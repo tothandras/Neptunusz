@@ -37,7 +37,7 @@ public class SubjectService {
     }
 
     public List<Subject> getSubjects() {
-        Collections.sort(subjects);
+        Collections.reverse(subjects);
         return subjects;
     }
 
