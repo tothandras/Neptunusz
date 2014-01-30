@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Subject implements Serializable {
+public class Subject implements Serializable, Comparable<Subject> {
     private String name;
     private String code;
     private SubjectType type;
@@ -70,5 +70,10 @@ public class Subject implements Serializable {
     @Override
     public String toString() {
         return "Subject{name: " + name + ", code: " + code + ", type: " + type + "}";
+    }
+
+    @Override
+    public int compareTo(Subject o) {
+        return Integer.compare(priority, o.priority);
     }
 }
