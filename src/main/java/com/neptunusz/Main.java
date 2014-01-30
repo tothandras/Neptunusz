@@ -20,7 +20,7 @@ public class Main {
         long timeInMillis = Calendar.getInstance().getTimeInMillis();
         //Calculate the wished
         Calendar calendar = Calendar.getInstance();
-        calendar.set(2014, Calendar.JANUARY, 30, 17, 12, 0);
+        calendar.set(2014, Calendar.JANUARY, 30, 18, 0, 0);
 
         long diff = calendar.getTimeInMillis() - timeInMillis;
 
