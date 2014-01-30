@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ *
+ */
 public class Subject implements Serializable, Comparable<Subject> {
     private String name;
     private String code;
@@ -18,7 +21,7 @@ public class Subject implements Serializable, Comparable<Subject> {
         this.code = code;
         this.type = type;
         this.register = true;
-        this.courses = new ArrayList<String>();
+        this.courses = new ArrayList<>();
         this.priority = 0;
     }
 
@@ -74,6 +77,6 @@ public class Subject implements Serializable, Comparable<Subject> {
 
     @Override
     public int compareTo(Subject o) {
-        return Integer.compare(priority, o.priority);
+        return Integer.compare(o.priority, this.priority);
     }
 }

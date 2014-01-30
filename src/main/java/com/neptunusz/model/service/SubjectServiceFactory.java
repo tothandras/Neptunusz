@@ -1,7 +1,7 @@
 package com.neptunusz.model.service;
 
 /**
- * Created by Andrew on 1/28/14.
+ * Created by Andrew
  * Singleton factory class for {@link com.neptunusz.model.service.SubjectService}
  */
 public class SubjectServiceFactory {

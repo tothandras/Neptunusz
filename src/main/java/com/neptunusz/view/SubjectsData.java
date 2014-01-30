@@ -9,7 +9,7 @@ import javax.swing.table.AbstractTableModel;
 
 public class SubjectsData extends AbstractTableModel {
 
-    //Get the singleton instance
+    // Get the singleton instance
     SubjectService subjectService = SubjectServiceFactory.getInstance();
 
     @Override

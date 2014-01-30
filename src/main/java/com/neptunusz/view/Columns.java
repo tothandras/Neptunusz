@@ -3,7 +3,6 @@ package com.neptunusz.view;
 import com.neptunusz.model.SubjectType;
 
 /**
- * Created by Andrew on 1/28/14.
  * This enum contains all information about the columns
  */
 public enum Columns {

@@ -7,10 +7,12 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class Neptun {
+
     private WebDriver driver;
     private boolean loginned;
 
@@ -23,20 +25,22 @@ public class Neptun {
         try {
             // Go to the Neptun home page
             driver.get("https://frame.neptun.bme.hu/hallgatoi/login.aspx");
-            WebDriverWait webDriverWait;
+            WebDriverWait webDriverWait = new WebDriverWait(driver, 2);
 
-            // Type your cookies here if you have any
+            // Quick login scripts
+            JavascriptExecutor javascriptExecutor = (JavascriptExecutor) driver;
+            javascriptExecutor.executeScript("maxtrynumber = 1e6;");
+            javascriptExecutor.executeScript("starttimer = function() {login_wait_timer = setInterval('docheck()', 1);}");
+
+            /*
+            // Cookies
             Cookie cookie1 = new Cookie(".ASPXAUTH", "here", "frame.neptun.bme.hu", "/", null);
             Cookie cookie2 = new Cookie("ASP.NET_SessionId", "and here", "frame.neptun.bme.hu", "/", null);
             driver.manage().addCookie(cookie1);
             driver.manage().addCookie(cookie2);
             driver.get("https://frame.neptun.bme.hu/hallgatoi/main.aspx");
+            */
 
-            JavascriptExecutor javascriptExecutor = (JavascriptExecutor) driver;
-            javascriptExecutor.executeScript("maxtrynumber = 1e6;");
-            javascriptExecutor.executeScript("starttimer = function() {login_wait_timer = setInterval('docheck()', 1);}");
-
-            driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
             // Enter user name
             WebElement user = driver.findElement(By.name("user"));
             user.sendKeys(username);
@@ -45,10 +49,19 @@ public class Neptun {
             WebElement pass = driver.findElement(By.name("pwd"));
             pass.sendKeys(password);
 
+            // Wait until course registration starts
+            long timeInMillis = Calendar.getInstance().getTimeInMillis();
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(2014, Calendar.JANUARY, 30, 18, 0, 0);
+            long diff = calendar.getTimeInMillis() - timeInMillis;
+
+            Thread.sleep(diff);
+
+            // Click on Login
             WebElement button = driver.findElement(By.name("btnSubmit"));
             button.click();
 
-            webDriverWait = new WebDriverWait(driver, 2);
+            // Handle alert: "A párhuzamos belépések számának korlátozása miatt korábbi munkamenetét töröltük!"
             try {
                 webDriverWait.until(ExpectedConditions.alertIsPresent());
                 Alert alert = driver.switchTo().alert();
@@ -57,34 +70,33 @@ public class Neptun {
                 e.printStackTrace();
             }
 
+            // Wait until full login
             ExpectedCondition<Boolean> expectedCondition = new ExpectedCondition<Boolean>() {
                 public Boolean apply(WebDriver driver) {
                     return (driver.getCurrentUrl().equals("https://frame.neptun.bme.hu/hallgatoi/main.aspx"));
                 }
             };
-
             webDriverWait = new WebDriverWait(driver, 400);
             webDriverWait.until(expectedCondition);
 
         } catch (Exception e) {
             e.printStackTrace();
-            // try again if not loginned
-            if (!driver.getCurrentUrl().equals("https://frame.neptun.bme.hu/hallgatoi/main.aspx")) {
-                login(username, password);
-            }
+            // Try again if not logged
+            login(username, password);
+
         }
 
-        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
         loginned = true;
     }
 
     public void register(Subject subject) {
         if (loginned) {
             try {
+                // Go to the subject registration page
                 driver.get("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0303");
                 WebDriverWait webDriverWait = new WebDriverWait(driver, 10);
 
-                // Select 2013/14/2 semester
+                // Select semester
                 Select select = new Select(driver.findElement(By.id("upFilter_cmbTerms")));
                 select.selectByVisibleText("2013/14/2");
 
@@ -113,17 +125,18 @@ public class Neptun {
                 WebElement searchIcon = driver.findElement(By.id("imgsearch"));
                 searchIcon.click();
 
+                // Wait until all subjects are listed
                 webDriverWait.until(ExpectedConditions.presenceOfElementLocated(By.id("h_addsubjects_gridSubjects_bodytable")));
 
+                // Select search by subject code
                 Select searchSelect = new Select(driver.findElement(By.id("h_addsubjects_gridSubjects_searchcolumn")));
                 searchSelect.selectByValue("Code");
-
                 WebElement searchField = driver.findElement(By.id("h_addsubjects_gridSubjects_searchtext"));
                 searchField.sendKeys(subject.getCode());
-
                 WebElement searchButton = driver.findElement(By.id("h_addsubjects_gridSubjects_searchsubmit"));
                 searchButton.click();
 
+                // Wait until the right subject code appears in the table
                 webDriverWait.until(ExpectedConditions.textToBePresentInElementLocated(By.xpath("/html/body/form[@id='form1']/fieldset/table[2]/tbody/tr/td[@class='function']/table[@class='function_table']/tbody/tr[@class='no_style'][3]/td[@id='function_table_body']/div[@id='upFunction']/div[@id='upFunction_h_addsubjects_upGrid']/div[@id='h_addsubjects_gridSubjects_gridtopdiv']/div[@id='h_addsubjects_gridSubjects_gridmaindiv']/div[@id='h_addsubjects_gridSubjects_grid_body_div']/table[@id='h_addsubjects_gridSubjects_bodytable']/tbody[@class='scrollablebody']/tr/td[3]"), subject.getCode()));
 
                 // Subject registration
@@ -148,15 +161,18 @@ public class Neptun {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
-            driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
         }
     }
 
     public void registeredSubjects() {
+        // Go to the registered subjects page
         driver.get("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0304");
+
+        // Select semester
         Select select = new Select(driver.findElement(By.id("cmb_cmb")));
         select.selectByVisibleText("2013/14/2 (aktuális félév)");
+
+        // List subjects
         WebElement button = driver.findElement(By.id("upFilter_expandedsearchbutton"));
         button.click();
     }

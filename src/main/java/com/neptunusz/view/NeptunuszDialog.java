@@ -39,9 +39,7 @@ public class NeptunuszDialog extends JDialog {
         //Load database
         try {
             subjectService.loadFromFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
 
@@ -84,7 +82,7 @@ public class NeptunuszDialog extends JDialog {
 
         buttonOK.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (usernameField.getText().isEmpty() || passwordField.getPassword().length == 0) {
+                if (usernameField.getText().isEmpty() || usernameField.getText().length() != 6 || passwordField.getPassword().length == 0) {
                     JOptionPane.showMessageDialog(null, "Add meg a neptun kódod és jelszavad", "Figyelmeztetés", JOptionPane.PLAIN_MESSAGE);
                 } else {
                     onOK();
@@ -103,6 +101,9 @@ public class NeptunuszDialog extends JDialog {
 
     }
 
+    /**
+     *
+     */
     private void onAddSubject() {
         //Add new subject
         SubjectType type = SubjectType.values()[subjectTypeComboBox.getSelectedIndex()];
@@ -122,6 +123,9 @@ public class NeptunuszDialog extends JDialog {
         dataModel.fireTableDataChanged();
     }
 
+    /**
+     *
+     */
     private void onRemove() {
         int selectedRow = subjectsTable.getSelectedRow();
         try {
@@ -133,6 +137,9 @@ public class NeptunuszDialog extends JDialog {
         dataModel.fireTableRowsDeleted(selectedRow, selectedRow);
     }
 
+    /**
+     *
+     */
     private void onAddCourse() {
         try {
             int selectedRow = subjectsTable.getSelectedRow();
@@ -150,6 +157,9 @@ public class NeptunuszDialog extends JDialog {
         }
     }
 
+    /**
+     *
+     */
     private void onClearCourses() {
         try {
             int selectedRow = subjectsTable.getSelectedRow();
@@ -163,12 +173,18 @@ public class NeptunuszDialog extends JDialog {
         }
     }
 
+    /**
+     *
+     */
     public void onOK() {
         this.setVisible(false);
         subjectService.register(usernameField.getText().trim(), new String(passwordField.getPassword()));
         this.setVisible(true);
     }
 
+    /**
+     *
+     */
     @Override
     public void dispose() {
         subjectService.saveToFile();
