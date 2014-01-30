@@ -34,7 +34,7 @@ public class Neptun {
 
             JavascriptExecutor javascriptExecutor = (JavascriptExecutor) driver;
             javascriptExecutor.executeScript("maxtrynumber = 1e6;");
-            javascriptExecutor.executeScript("starttimer = function() {login_wait_timer = setInterval('docheck()', 1250);}");
+            javascriptExecutor.executeScript("starttimer = function() {login_wait_timer = setInterval('docheck()', 1);}");
 
             driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
             // Enter user name
