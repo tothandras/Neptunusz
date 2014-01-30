@@ -1,12 +1,9 @@
 package com.neptunusz.view;
 
-import com.neptunusz.controller.Neptun;
 import com.neptunusz.model.Subject;
 import com.neptunusz.model.SubjectType;
 import com.neptunusz.model.service.SubjectService;
 import com.neptunusz.model.service.SubjectServiceFactory;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
 
 import javax.swing.*;
 import java.awt.*;
@@ -103,6 +100,7 @@ public class NeptunuszDialog extends JDialog {
                 }
             }
         });
+
     }
 
     private void onAddSubject() {
