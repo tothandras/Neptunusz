@@ -95,7 +95,7 @@ public class Neptun {
     }
 
     public void register(Subject subject) {
-        if (loggedIn) {
+        if (loggedIn && subject.isRegister()) {
             try {
                 // Go to the subject registration page
                 driver.get("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0303");

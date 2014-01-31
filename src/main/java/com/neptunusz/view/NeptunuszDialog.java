@@ -82,7 +82,7 @@ public class NeptunuszDialog extends JDialog {
 
         buttonOK.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (usernameField.getText().isEmpty() || usernameField.getText().length() != 6 || passwordField.getPassword().length == 0) {
+                if (usernameField.getText().isEmpty() || passwordField.getPassword().length == 0) {
                     JOptionPane.showMessageDialog(null, "Add meg a neptun kódod és jelszavad", "Figyelmeztetés", JOptionPane.PLAIN_MESSAGE);
                 } else {
                     onOK();

@@ -8,7 +8,6 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -33,7 +32,6 @@ public class SubjectService {
     }
 
     /**
-     *
      * @throws IOException
      * @throws ClassNotFoundException
      */
@@ -46,7 +44,6 @@ public class SubjectService {
     }
 
     /**
-     *
      * @return
      */
     public List<Subject> getSubjects() {
@@ -55,7 +52,6 @@ public class SubjectService {
     }
 
     /**
-     *
      * @param index
      * @return subject
      * @throws Exception
@@ -79,9 +75,7 @@ public class SubjectService {
         neptun.login(username, password);
 
         for (Subject subject : subjects) {
-            if (subject.isRegister()) {
-                neptun.register(subject);
-            }
+            neptun.register(subject);
         }
 
         neptun.registeredSubjects();
