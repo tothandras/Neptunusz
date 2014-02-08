@@ -2,8 +2,6 @@ package com.neptunusz.model.service;
 
 import com.neptunusz.controller.Neptun;
 import com.neptunusz.model.Subject;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -69,8 +67,7 @@ public class SubjectService {
      */
     public void register(String username, String password) {
 
-        WebDriver driver = new FirefoxDriver();
-        Neptun neptun = new Neptun(driver);
+        Neptun neptun = new Neptun();
 
         neptun.login(username, password);
 

@@ -1,167 +1,281 @@
 package com.neptunusz.controller;
 
 import com.neptunusz.model.Subject;
-import org.openqa.selenium.*;
-import org.openqa.selenium.support.ui.ExpectedCondition;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.Select;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicCookieStore;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
-import java.util.Calendar;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class Neptun {
 
-    private WebDriver driver;
+    CloseableHttpClient httpClient;
+    HttpContext localContext;
+    RequestConfig requestConfig;
     private boolean loggedIn;
-    private String semester;
 
-    public Neptun(WebDriver driver) {
-        this.driver = driver;
-        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-
-        this.semester = "2013/14/2";
+    public Neptun() {
+        httpClient = HttpClients.createDefault();
+        BasicCookieStore cookieStore = new BasicCookieStore();
+        localContext = new BasicHttpContext();
+        localContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
+        requestConfig = RequestConfig.custom()
+                .setExpectContinueEnabled(true)
+                .setStaleConnectionCheckEnabled(true)
+                .setSocketTimeout(5000)
+                .setConnectTimeout(5000)
+                .setConnectionRequestTimeout(5000)
+                .build();
     }
 
     public void login(String username, String password) {
         try {
-            // Go to the Neptun home page
-            driver.get("https://frame.neptun.bme.hu/hallgatoi/login.aspx");
-            WebDriverWait webDriverWait = new WebDriverWait(driver, 2);
+            HttpUriRequest login = RequestBuilder.post()
+                    .setUri("https://frame.neptun.bme.hu/hallgatoi/Login.aspx/CheckLoginEnable")
+                    .setEntity(new StringEntity("{'user':'" + username.trim() + "','pwd':'" + password + "','UserLogin':null,'GUID':null}", ContentType.APPLICATION_JSON))
+                    .setConfig(requestConfig)
+                    .build();
 
-            // Quick login scripts
-            JavascriptExecutor javascriptExecutor = (JavascriptExecutor) driver;
-            javascriptExecutor.executeScript("maxtrynumber = 1e6;");
-            javascriptExecutor.executeScript("starttimer = function() {login_wait_timer = setInterval('docheck()', 1);}");
-
-            /*
-            // Cookies
-            Cookie cookie1 = new Cookie(".ASPXAUTH", "here", "frame.neptun.bme.hu", "/", null);
-            Cookie cookie2 = new Cookie("ASP.NET_SessionId", "and here", "frame.neptun.bme.hu", "/", null);
-            driver.manage().addCookie(cookie1);
-            driver.manage().addCookie(cookie2);
-            driver.get("https://frame.neptun.bme.hu/hallgatoi/main.aspx");
-            */
-
-            // Enter user name
-            WebElement user = driver.findElement(By.name("user"));
-            user.sendKeys(username);
-
-            // Enter password
-            WebElement pass = driver.findElement(By.name("pwd"));
-            pass.sendKeys(password);
-
-            // Wait until course registration starts
-            long timeInMillis = Calendar.getInstance().getTimeInMillis();
-            Calendar calendar = Calendar.getInstance();
-            calendar.set(2014, Calendar.JANUARY, 30, 18, 0, 0);
-            long diff = calendar.getTimeInMillis() - timeInMillis;
-
-            if (diff > 0) {
-                Thread.sleep(diff);
+            HttpResponse response = httpClient.execute(login, localContext);
+            if (EntityUtils.toString(response.getEntity()).contains("True")) {
+                loggedIn = true;
+                System.out.println("Logged in as: " + username);
+            } else {
+                System.out.println("Wrong username or password");
             }
-
-            // Click on Login
-            WebElement button = driver.findElement(By.name("btnSubmit"));
-            button.click();
-
-            // Handle alert: "A párhuzamos belépések számának korlátozása miatt korábbi munkamenetét töröltük!"
-            try {
-                webDriverWait.until(ExpectedConditions.alertIsPresent());
-                Alert alert = driver.switchTo().alert();
-                alert.accept();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            // Wait until full login
-            ExpectedCondition<Boolean> expectedCondition = new ExpectedCondition<Boolean>() {
-                public Boolean apply(WebDriver driver) {
-                    return (driver.getCurrentUrl().equals("https://frame.neptun.bme.hu/hallgatoi/main.aspx"));
-                }
-            };
-            webDriverWait = new WebDriverWait(driver, 400);
-            webDriverWait.until(expectedCondition);
-
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
-            // Try again if not logged
-            login(username, password);
-
         }
-
-        loggedIn = true;
     }
 
     public void register(Subject subject) {
         if (loggedIn && subject.isRegister()) {
+
+            HttpResponse httpResponse;
+            Document document;
+            String viewState;
+            String eventValidation;
+            String response;
+
+            String subjectType;
+            switch (subject.getType()) {
+                case CURRICULUM:
+                    subjectType = "MintatantervTargyai";
+                    break;
+                case OPTIONAL:
+                    subjectType = "EgyebSzabadonValaszthato";
+                    break;
+                default:
+                    subjectType = "MindenIntezmenyiTargy";
+                    break;
+            }
+
             try {
-                // Go to the subject registration page
-                driver.get("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0303");
-                WebDriverWait webDriverWait = new WebDriverWait(driver, 10);
+                // Get the subjects page
+                HttpUriRequest subjectsPage = RequestBuilder.get()
+                        .setUri("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0303")
+                        .build();
 
-                // Select semester
-                Select select = new Select(driver.findElement(By.id("upFilter_cmbTerms")));
-                select.selectByVisibleText(semester);
+                httpResponse = httpClient.execute(subjectsPage, localContext);
+                response = EntityUtils.toString(httpResponse.getEntity());
 
-                // Select subject type
-                WebElement radioButton;
-                switch (subject.getType()) {
-                    case CURRICULUM:
-                        radioButton = driver.findElement(By.id("upFilter_rbtnSubjectType_0"));
-                        radioButton.click();
-                        break;
-                    case OPTIONAL:
-                        radioButton = driver.findElement(By.id("upFilter_rbtnSubjectType_1"));
-                        radioButton.click();
-                        break;
-                    case ALL:
-                        radioButton = driver.findElement(By.id("upFilter_rbtnSubjectType_2"));
-                        radioButton.click();
-                        break;
-                }
+                // Get values
+                document = Jsoup.parse(response);
+                viewState = document.select("#__VIEWSTATE").val();
+                eventValidation = document.select("#__EVENTVALIDATION").val();
 
-                // List subjects
-                WebElement listButton = driver.findElement(By.id("upFilter_expandedsearchbutton"));
-                listButton.click();
+                List<BasicNameValuePair> form = new ArrayList<>();
+                form.add(new BasicNameValuePair("ToolkitScriptManager1", "upFilter|upFilter$expandedsearchbutton"));
+                form.add(new BasicNameValuePair("ToolkitScriptManager1_HiddenField", ""));
+                form.add(new BasicNameValuePair("__EVENTTARGET", ""));
+                form.add(new BasicNameValuePair("__EVENTARGUMENT", ""));
+                form.add(new BasicNameValuePair("__LASTFOCUS", ""));
+                form.add(new BasicNameValuePair("__VIEWSTATE", viewState));
+                form.add(new BasicNameValuePair("__EVENTVALIDATION", eventValidation));
+                form.add(new BasicNameValuePair("ActiveModalBehaviourID", ""));
+                form.add(new BasicNameValuePair("progressalerttype", "progress"));
+                form.add(new BasicNameValuePair("NoMatchString", "!"));
+                form.add(new BasicNameValuePair("hfCountDownTime", "1800"));
+                form.add(new BasicNameValuePair("upBoxes$upCalendar$gdgCalendar$ctl35$calendar$upPanel$chkTime", "on"));
+                form.add(new BasicNameValuePair("upBoxes$upCalendar$gdgCalendar$ctl35$calendar$upPanel$chkExam", "on"));
+                form.add(new BasicNameValuePair("upBoxes$upCalendar$gdgCalendar$ctl35$calendar$upPanel$chkTask", "on"));
+                form.add(new BasicNameValuePair("upBoxes$upCalendar$gdgCalendar$ctl35$calendar$upPanel$chkKonzultacio", "on"));
+                form.add(new BasicNameValuePair("upFilter$cmbTerms", "70607"));
+                form.add(new BasicNameValuePair("upFilter$rbtnSubjectType", subjectType));
+                form.add(new BasicNameValuePair("upFilter$cmbTemplates", "All"));
+                form.add(new BasicNameValuePair("upFilter$cmbSubjectGroups", "All"));
+                form.add(new BasicNameValuePair("upFilter$cmbLanguage", "0"));
+                form.add(new BasicNameValuePair("upFilter$WTChooserFrom$validCalloutExt_upFilter_WTChooserFrom_ClientState", ""));
+                form.add(new BasicNameValuePair("upFilter$WTChooserFrom$cmbWTChooser_upFilter_WTChooserFrom", "Hétfő"));
+                form.add(new BasicNameValuePair("upFilter$WTChooserFrom$txbWTChooser_upFilter_WTChooserFrom", ""));
+                form.add(new BasicNameValuePair("upFilter$WTChooserFrom$maskEditT_upFilter_WTChooserFrom_ClientState", ""));
+                form.add(new BasicNameValuePair("upFilter$txtOktato", ""));
+                form.add(new BasicNameValuePair("upFilter$WTChooserTo$validCalloutExt_upFilter_WTChooserTo_ClientState", ""));
+                form.add(new BasicNameValuePair("upFilter$WTChooserTo$cmbWTChooser_upFilter_WTChooserTo", "Hétfő"));
+                form.add(new BasicNameValuePair("upFilter$WTChooserTo$txbWTChooser_upFilter_WTChooserTo", ""));
+                form.add(new BasicNameValuePair("upFilter$WTChooserTo$maskEditT_upFilter_WTChooserTo_ClientState", ""));
+                form.add(new BasicNameValuePair("upFunction$h_addsubjects$upFilter$searchpanel$searchpanel_state", "expanded"));
+                form.add(new BasicNameValuePair("filedownload$hfDocumentId", ""));
+                form.add(new BasicNameValuePair("__ASYNCPOST", "true"));
+                form.add(new BasicNameValuePair("upFilter$expandedsearchbutton", ""));
 
-                // Search for subject name
-                WebElement searchIcon = driver.findElement(By.id("imgsearch"));
-                searchIcon.click();
+                HttpUriRequest listSubjects = RequestBuilder.post()
+                        .setUri("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0303")
+                        .setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+                        .setHeader("User-Agent", "Mozilla/5.0")
+                        .setEntity(new StringEntity(URLEncodedUtils.format(form, StandardCharsets.UTF_8), ContentType.APPLICATION_FORM_URLENCODED))
+                        .build();
 
-                // Wait until all subjects are listed
-                webDriverWait.until(ExpectedConditions.presenceOfElementLocated(By.id("h_addsubjects_gridSubjects_bodytable")));
+                httpResponse = httpClient.execute(listSubjects, localContext);
+                response = EntityUtils.toString(httpResponse.getEntity());
+                viewState = response.substring(response.lastIndexOf("__VIEWSTATE|") + 12, response.lastIndexOf("__EVENTVALIDATION|") - 18);
+                eventValidation = response.substring(response.lastIndexOf("__EVENTVALIDATION|") + 18, response.lastIndexOf("asyncPostBackControlIDs|") - 3);
 
-                // Select search by subject code
-                Select searchSelect = new Select(driver.findElement(By.id("h_addsubjects_gridSubjects_searchcolumn")));
-                searchSelect.selectByValue("Code");
-                WebElement searchField = driver.findElement(By.id("h_addsubjects_gridSubjects_searchtext"));
-                searchField.sendKeys(subject.getCode());
-                WebElement searchButton = driver.findElement(By.id("h_addsubjects_gridSubjects_searchsubmit"));
-                searchButton.click();
+                HttpUriRequest searchSubject = RequestBuilder.get()
+                        .setUri("https://frame.neptun.bme.hu/hallgatoi/HandleRequest.ashx?RequestType=GetData&GridID=h_addsubjects_gridSubjects&pageindex=1&pagesize=500&sort1=TermNumber%20ASC&sort2=&fixedheader=false&searchcol=Code&searchtext=" + subject.getCode().trim() + "&searchexpanded=true&allsubrowsexpanded=False&selectedid=undefined&functionname=&level=")
+                        .build();
 
-                // Wait until the right subject code appears in the table
-                webDriverWait.until(ExpectedConditions.textToBePresentInElementLocated(By.xpath("/html/body/form[@id='form1']/fieldset/table[2]/tbody/tr/td[@class='function']/table[@class='function_table']/tbody/tr[@class='no_style'][3]/td[@id='function_table_body']/div[@id='upFunction']/div[@id='upFunction_h_addsubjects_upGrid']/div[@id='h_addsubjects_gridSubjects_gridtopdiv']/div[@id='h_addsubjects_gridSubjects_gridmaindiv']/div[@id='h_addsubjects_gridSubjects_grid_body_div']/table[@id='h_addsubjects_gridSubjects_bodytable']/tbody[@class='scrollablebody']/tr/td[3]"), subject.getCode()));
+                httpResponse = httpClient.execute(searchSubject, localContext);
+                response = EntityUtils.toString(httpResponse.getEntity());
+                document = Jsoup.parse(response);
+                String subjectId = document.select("#h_addsubjects_gridSubjects_bodytable>tbody>tr").attr("id").substring(4);
 
-                // Subject registration
-                List<WebElement> links = driver.findElements(By.className("link"));
-                for (WebElement link : links) {
-                    if (link.getText().equals("Felvesz")) {
-                        link.click();
-                        break;
+                form = new ArrayList<>();
+                form.add(new BasicNameValuePair("ToolkitScriptManager1", "ToolkitScriptManager1|upFunction$h_addsubjects$upGrid$gridSubjects"));
+                form.add(new BasicNameValuePair("ToolkitScriptManager1_HiddenField", ""));
+                form.add(new BasicNameValuePair("__EVENTTARGET", "upFunction$h_addsubjects$upGrid$gridSubjects"));
+                form.add(new BasicNameValuePair("__EVENTARGUMENT", "commandname=subjectdata;commandsource=select;id=" + subjectId + ";level=1"));
+                form.add(new BasicNameValuePair("__LASTFOCUS", ""));
+                form.add(new BasicNameValuePair("__VIEWSTATE", viewState));
+                form.add(new BasicNameValuePair("__EVENTVALIDATION", eventValidation));
+                form.add(new BasicNameValuePair("ActiveModalBehaviourID", ""));
+                form.add(new BasicNameValuePair("progressalerttype", "progress"));
+                form.add(new BasicNameValuePair("NoMatchString", "!"));
+                form.add(new BasicNameValuePair("hfCountDownTime", "1800"));
+                form.add(new BasicNameValuePair("upBoxes$upCalendar$gdgCalendar$ctl35$calendar$upPanel$chkTime", "on"));
+                form.add(new BasicNameValuePair("upBoxes$upCalendar$gdgCalendar$ctl35$calendar$upPanel$chkExam", "on"));
+                form.add(new BasicNameValuePair("upBoxes$upCalendar$gdgCalendar$ctl35$calendar$upPanel$chkTask", "on"));
+                form.add(new BasicNameValuePair("upBoxes$upCalendar$gdgCalendar$ctl35$calendar$upPanel$chkKonzultacio", "on"));
+                form.add(new BasicNameValuePair("upFilter$cmbTerms", "70607"));
+                form.add(new BasicNameValuePair("upFilter$rbtnSubjectType", subjectType));
+                form.add(new BasicNameValuePair("upFilter$cmbTemplates", "All"));
+                form.add(new BasicNameValuePair("upFilter$cmbSubjectGroups", "All"));
+                form.add(new BasicNameValuePair("upFilter$cmbLanguage", "0"));
+                form.add(new BasicNameValuePair("upFilter$WTChooserFrom$validCalloutExt_upFilter_WTChooserFrom_ClientState", ""));
+                form.add(new BasicNameValuePair("upFilter$WTChooserFrom$cmbWTChooser_upFilter_WTChooserFrom", "Hétfő"));
+                form.add(new BasicNameValuePair("upFilter$WTChooserFrom$txbWTChooser_upFilter_WTChooserFrom", ""));
+                form.add(new BasicNameValuePair("upFilter$WTChooserFrom$maskEditT_upFilter_WTChooserFrom_ClientState", ""));
+                form.add(new BasicNameValuePair("upFilter$txtOktato", ""));
+                form.add(new BasicNameValuePair("upFilter$WTChooserTo$validCalloutExt_upFilter_WTChooserTo_ClientState", ""));
+                form.add(new BasicNameValuePair("upFilter$WTChooserTo$cmbWTChooser_upFilter_WTChooserTo", "Hétfő"));
+                form.add(new BasicNameValuePair("upFilter$WTChooserTo$txbWTChooser_upFilter_WTChooserTo", ""));
+                form.add(new BasicNameValuePair("upFilter$WTChooserTo$maskEditT_upFilter_WTChooserTo_ClientState", ""));
+                form.add(new BasicNameValuePair("upFunction$h_addsubjects$upFilter$searchpanel$searchpanel_state", "expanded"));
+                form.add(new BasicNameValuePair("upFunction$h_addsubjects$upModal$upmodal_subjectdata$_data", "Visible:false"));
+                form.add(new BasicNameValuePair("filedownload$hfDocumentId", ""));
+                form.add(new BasicNameValuePair("Subject_data1_tab_ClientState", "{\"ActiveTabIndex\":0,\"TabEnabledState\":[true,true,true,true,true,true],\"TabWasLoadedOnceState\":[true,false,false,false,false,false]}"));
+                form.add(new BasicNameValuePair("__ASYNCPOST", "true"));
+                form.add(new BasicNameValuePair("", ""));
+
+                HttpUriRequest openModal = RequestBuilder.post()
+                        .setUri("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0303")
+                        .setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+                        .setHeader("User-Agent", "Mozilla/5.0")
+                        .setEntity(new StringEntity(URLEncodedUtils.format(form, StandardCharsets.UTF_8), ContentType.APPLICATION_FORM_URLENCODED))
+                        .build();
+
+                httpResponse = httpClient.execute(openModal, localContext);
+                response = EntityUtils.toString(httpResponse.getEntity());
+                document = Jsoup.parse(response);
+                viewState = response.substring(response.lastIndexOf("__VIEWSTATE|") + 12, response.lastIndexOf("__EVENTVALIDATION|") - 18);
+                eventValidation = response.substring(response.lastIndexOf("__EVENTVALIDATION|") + 18, response.lastIndexOf("asyncPostBackControlIDs|") - 3);
+
+                List<String> courseIds = new ArrayList<>();
+                for (Element span : document.select("span")) {
+                    for (String s : subject.getCourses()) {
+                        if (span.text().trim().equals(s)) {
+                            courseIds.add(span.parent().attr("onclick").substring(8, 17));
+                        }
                     }
                 }
 
-                webDriverWait.until(ExpectedConditions.visibilityOfElementLocated(By.id("Subject_data1_ctl00")));
-                for (String course : subject.getCourses()) {
-                    WebElement checkbox = driver.findElement(By.xpath("//*[@id=//label[normalize-space(text()) = '" + course + "']/@for]"));
-                    checkbox.click();
+                for (String courseId : courseIds) {
+                    HttpUriRequest registerSubject = RequestBuilder.post()
+                            .setUri("https://frame.neptun.bme.hu/hallgatoi/HandleRequest.ashx?RequestType=Update&GridID=Addsubject_course1_gridCourses&pageindex=1&pagesize=999999&sort1=&sort2=&fixedheader=false&searchcol=&searchtext=&searchexpanded=false&allsubrowsexpanded=False&selectedid=undefined&functionname=update&level=1")
+                            .setHeader("Content-Type", "text/plain;charset=UTF-8")
+                            .setHeader("User-Agent", "Mozilla/5.0")
+                            .setEntity(new StringEntity("{\"Data\":[ {\"ID\":\""+ courseId +"\",\"chk\":\"#true\"} ]}"))
+                            .build();
+
+                    httpResponse = httpClient.execute(registerSubject, localContext);
+                    if (EntityUtils.toString(httpResponse.getEntity()).equals("ok")) {
+                        System.out.println("ok");
+                    }
                 }
 
-                // Save
-                WebElement finishButton = driver.findElement(By.id("function_update1"));
-                finishButton.click();
+                form = new ArrayList<>();
+                form.add(new BasicNameValuePair("ToolkitScriptManager1", "ToolkitScriptManager1|upFunction$h_addsubjects$upModal$upmodal_subjectdata$ctl02$Subject_data1$upParent$tab$ctl00$upAddSubjects$Addsubject_course1$upGrid$gridCourses"));
+                form.add(new BasicNameValuePair("ToolkitScriptManager1_HiddenField", ""));
+                form.add(new BasicNameValuePair("__EVENTTARGET", "upFunction$h_addsubjects$upModal$upmodal_subjectdata$ctl02$Subject_data1$upParent$tab$ctl00$upAddSubjects$Addsubject_course1$upGrid$gridCourses"));
+                form.add(new BasicNameValuePair("__EVENTARGUMENT", "commandname=update;commandsource=function"));
+                form.add(new BasicNameValuePair("__LASTFOCUS", ""));
+                form.add(new BasicNameValuePair("__VIEWSTATE", viewState));
+                form.add(new BasicNameValuePair("__EVENTVALIDATION", eventValidation));
+                form.add(new BasicNameValuePair("ActiveModalBehaviourID", "behaviorupFunction_h_addsubjects_upModal_modal_subjectdata"));
+                form.add(new BasicNameValuePair("progressalerttype", "progress"));
+                form.add(new BasicNameValuePair("NoMatchString", "!"));
+                form.add(new BasicNameValuePair("hfCountDownTime", "1800"));
+                form.add(new BasicNameValuePair("upBoxes$upCalendar$gdgCalendar$ctl35$calendar$upPanel$chkTime", "on"));
+                form.add(new BasicNameValuePair("upBoxes$upCalendar$gdgCalendar$ctl35$calendar$upPanel$chkExam", "on"));
+                form.add(new BasicNameValuePair("upBoxes$upCalendar$gdgCalendar$ctl35$calendar$upPanel$chkTask", "on"));
+                form.add(new BasicNameValuePair("upBoxes$upCalendar$gdgCalendar$ctl35$calendar$upPanel$chkKonzultacio", "on"));
+                form.add(new BasicNameValuePair("upFilter$cmbTerms", "70607"));
+                form.add(new BasicNameValuePair("upFilter$rbtnSubjectType", subjectType));
+                form.add(new BasicNameValuePair("upFilter$cmbTemplates", "All"));
+                form.add(new BasicNameValuePair("upFilter$cmbSubjectGroups", "All"));
+                form.add(new BasicNameValuePair("upFilter$cmbLanguage", "0"));
+                form.add(new BasicNameValuePair("upFilter$WTChooserFrom$validCalloutExt_upFilter_WTChooserFrom_ClientState", ""));
+                form.add(new BasicNameValuePair("upFilter$WTChooserFrom$cmbWTChooser_upFilter_WTChooserFrom", "Hétfő"));
+                form.add(new BasicNameValuePair("upFilter$WTChooserFrom$txbWTChooser_upFilter_WTChooserFrom", ""));
+                form.add(new BasicNameValuePair("upFilter$WTChooserFrom$maskEditT_upFilter_WTChooserFrom_ClientState", ""));
+                form.add(new BasicNameValuePair("upFilter$txtOktato", ""));
+                form.add(new BasicNameValuePair("upFilter$WTChooserTo$validCalloutExt_upFilter_WTChooserTo_ClientState", ""));
+                form.add(new BasicNameValuePair("upFilter$WTChooserTo$cmbWTChooser_upFilter_WTChooserTo", "Hétfő"));
+                form.add(new BasicNameValuePair("upFilter$WTChooserTo$txbWTChooser_upFilter_WTChooserTo", ""));
+                form.add(new BasicNameValuePair("upFilter$WTChooserTo$maskEditT_upFilter_WTChooserTo_ClientState", ""));
+                form.add(new BasicNameValuePair("upFunction$h_addsubjects$upFilter$searchpanel$searchpanel_state", "expanded"));
+                form.add(new BasicNameValuePair("upFunction$h_addsubjects$upModal$upmodal_subjectdata$_data", "Visible:true"));
+                form.add(new BasicNameValuePair("filedownload$hfDocumentId", ""));
+                form.add(new BasicNameValuePair("Subject_data1_tab_ClientState", "{\"ActiveTabIndex\":0,\"TabEnabledState\":[true,true,true,true,true,true],\"TabWasLoadedOnceState\":[true,false,false,false,false,false]}"));
+                form.add(new BasicNameValuePair("__ASYNCPOST", "true"));
+                form.add(new BasicNameValuePair("", ""));
+
+                HttpUriRequest finish = RequestBuilder.post()
+                        .setUri("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0303")
+                        .setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+                        .setHeader("User-Agent", "Mozilla/5.0")
+                        .setEntity(new StringEntity(URLEncodedUtils.format(form, StandardCharsets.UTF_8), ContentType.APPLICATION_FORM_URLENCODED))
+                        .build();
+
+                httpClient.execute(finish, localContext);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -170,15 +284,10 @@ public class Neptun {
     }
 
     public void registeredSubjects() {
-        // Go to the registered subjects page
-        driver.get("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0304");
-
-        // Select semester
-        Select select = new Select(driver.findElement(By.id("cmb_cmb")));
-        select.selectByVisibleText(semester + " (aktuális félév)");
-
-        // List subjects
-        WebElement button = driver.findElement(By.id("upFilter_expandedsearchbutton"));
-        button.click();
+        try {
+            httpClient.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
