@@ -55,11 +55,17 @@ public class Neptun {
                     .build();
 
             HttpResponse response = httpClient.execute(login, localContext);
-            if (EntityUtils.toString(response.getEntity()).contains("True")) {
+            String responseString = EntityUtils.toString(response.getEntity());
+
+            //{"d":"{success:\u0027False\u0027,errormessage:\u0027Nincs szabad hely\u0027,errorcode:\u0027serverfull\u0027,warningmessage:\u0027\u0027}"}
+            if (responseString.contains("True")) {
+                System.out.println("Bejelentkezve: " + username);
                 loggedIn = true;
-                System.out.println("Logged in as: " + username);
+            } else if (responseString.contains("Nincs szabad hely")) {
+                System.out.println("Nincs szabad hely, próbálkozás újra");
+                login(username, password);
             } else {
-                System.out.println("Wrong username or password");
+                System.out.println("Rossz felhasználónév, vagy jelszó");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -222,7 +228,7 @@ public class Neptun {
                             .setUri("https://frame.neptun.bme.hu/hallgatoi/HandleRequest.ashx?RequestType=Update&GridID=Addsubject_course1_gridCourses&pageindex=1&pagesize=999999&sort1=&sort2=&fixedheader=false&searchcol=&searchtext=&searchexpanded=false&allsubrowsexpanded=False&selectedid=undefined&functionname=update&level=1")
                             .setHeader("Content-Type", "text/plain;charset=UTF-8")
                             .setHeader("User-Agent", "Mozilla/5.0")
-                            .setEntity(new StringEntity("{\"Data\":[ {\"ID\":\""+ courseId +"\",\"chk\":\"#true\"} ]}"))
+                            .setEntity(new StringEntity("{\"Data\":[ {\"ID\":\"" + courseId + "\",\"chk\":\"#true\"} ]}"))
                             .build();
 
                     httpResponse = httpClient.execute(registerSubject, localContext);
