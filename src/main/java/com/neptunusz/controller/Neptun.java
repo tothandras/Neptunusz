@@ -5,7 +5,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -13,8 +12,6 @@ import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -28,21 +25,22 @@ import java.util.List;
 public class Neptun {
 
     CloseableHttpClient httpClient;
-    HttpContext localContext;
     RequestConfig requestConfig;
     private boolean loggedIn;
 
     public Neptun() {
-        httpClient = HttpClients.createDefault();
         BasicCookieStore cookieStore = new BasicCookieStore();
-        localContext = new BasicHttpContext();
-        localContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
+
         requestConfig = RequestConfig.custom()
-                .setExpectContinueEnabled(true)
-                .setStaleConnectionCheckEnabled(true)
                 .setSocketTimeout(5000)
                 .setConnectTimeout(5000)
                 .setConnectionRequestTimeout(5000)
+                .build();
+
+        httpClient = HttpClients.custom()
+                .setUserAgent("Mozilla/5.0")
+                .setDefaultCookieStore(cookieStore)
+                .setDefaultRequestConfig(requestConfig)
                 .build();
     }
 
@@ -51,10 +49,9 @@ public class Neptun {
             HttpUriRequest login = RequestBuilder.post()
                     .setUri("https://frame.neptun.bme.hu/hallgatoi/Login.aspx/CheckLoginEnable")
                     .setEntity(new StringEntity("{'user':'" + username.trim() + "','pwd':'" + password + "','UserLogin':null,'GUID':null}", ContentType.APPLICATION_JSON))
-                    .setConfig(requestConfig)
                     .build();
 
-            HttpResponse response = httpClient.execute(login, localContext);
+            HttpResponse response = httpClient.execute(login);
             String responseString = EntityUtils.toString(response.getEntity());
 
             //{"d":"{success:\u0027False\u0027,errormessage:\u0027Nincs szabad hely\u0027,errorcode:\u0027serverfull\u0027,warningmessage:\u0027\u0027}"}
@@ -100,7 +97,7 @@ public class Neptun {
                         .setUri("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0303")
                         .build();
 
-                httpResponse = httpClient.execute(subjectsPage, localContext);
+                httpResponse = httpClient.execute(subjectsPage);
                 response = EntityUtils.toString(httpResponse.getEntity());
 
                 // Get values
@@ -146,11 +143,10 @@ public class Neptun {
                 HttpUriRequest listSubjects = RequestBuilder.post()
                         .setUri("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0303")
                         .setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-                        .setHeader("User-Agent", "Mozilla/5.0")
                         .setEntity(new StringEntity(URLEncodedUtils.format(form, StandardCharsets.UTF_8), ContentType.APPLICATION_FORM_URLENCODED))
                         .build();
 
-                httpResponse = httpClient.execute(listSubjects, localContext);
+                httpResponse = httpClient.execute(listSubjects);
                 response = EntityUtils.toString(httpResponse.getEntity());
                 viewState = response.substring(response.lastIndexOf("__VIEWSTATE|") + 12, response.lastIndexOf("__EVENTVALIDATION|") - 18);
                 eventValidation = response.substring(response.lastIndexOf("__EVENTVALIDATION|") + 18, response.lastIndexOf("asyncPostBackControlIDs|") - 3);
@@ -159,7 +155,7 @@ public class Neptun {
                         .setUri("https://frame.neptun.bme.hu/hallgatoi/HandleRequest.ashx?RequestType=GetData&GridID=h_addsubjects_gridSubjects&pageindex=1&pagesize=500&sort1=TermNumber%20ASC&sort2=&fixedheader=false&searchcol=Code&searchtext=" + subject.getCode().trim() + "&searchexpanded=true&allsubrowsexpanded=False&selectedid=undefined&functionname=&level=")
                         .build();
 
-                httpResponse = httpClient.execute(searchSubject, localContext);
+                httpResponse = httpClient.execute(searchSubject);
                 response = EntityUtils.toString(httpResponse.getEntity());
                 document = Jsoup.parse(response);
                 String subjectId = document.select("#h_addsubjects_gridSubjects_bodytable>tbody>tr").attr("id").substring(4);
@@ -204,11 +200,11 @@ public class Neptun {
                 HttpUriRequest openModal = RequestBuilder.post()
                         .setUri("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0303")
                         .setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-                        .setHeader("User-Agent", "Mozilla/5.0")
                         .setEntity(new StringEntity(URLEncodedUtils.format(form, StandardCharsets.UTF_8), ContentType.APPLICATION_FORM_URLENCODED))
                         .build();
 
-                httpResponse = httpClient.execute(openModal, localContext);
+
+                httpResponse = httpClient.execute(openModal);
                 response = EntityUtils.toString(httpResponse.getEntity());
                 document = Jsoup.parse(response);
                 viewState = response.substring(response.lastIndexOf("__VIEWSTATE|") + 12, response.lastIndexOf("__EVENTVALIDATION|") - 18);
@@ -227,11 +223,10 @@ public class Neptun {
                     HttpUriRequest registerSubject = RequestBuilder.post()
                             .setUri("https://frame.neptun.bme.hu/hallgatoi/HandleRequest.ashx?RequestType=Update&GridID=Addsubject_course1_gridCourses&pageindex=1&pagesize=999999&sort1=&sort2=&fixedheader=false&searchcol=&searchtext=&searchexpanded=false&allsubrowsexpanded=False&selectedid=undefined&functionname=update&level=1")
                             .setHeader("Content-Type", "text/plain;charset=UTF-8")
-                            .setHeader("User-Agent", "Mozilla/5.0")
                             .setEntity(new StringEntity("{\"Data\":[ {\"ID\":\"" + courseId + "\",\"chk\":\"#true\"} ]}"))
                             .build();
 
-                    httpResponse = httpClient.execute(registerSubject, localContext);
+                    httpResponse = httpClient.execute(registerSubject);
                     if (EntityUtils.toString(httpResponse.getEntity()).equals("ok")) {
                         System.out.println("ok");
                     }
@@ -277,11 +272,10 @@ public class Neptun {
                 HttpUriRequest finish = RequestBuilder.post()
                         .setUri("https://frame.neptun.bme.hu/hallgatoi/main.aspx?ismenuclick=true&ctrl=0303")
                         .setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-                        .setHeader("User-Agent", "Mozilla/5.0")
                         .setEntity(new StringEntity(URLEncodedUtils.format(form, StandardCharsets.UTF_8), ContentType.APPLICATION_FORM_URLENCODED))
                         .build();
 
-                httpClient.execute(finish, localContext);
+                httpClient.execute(finish);
 
             } catch (Exception e) {
                 e.printStackTrace();
