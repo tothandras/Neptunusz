@@ -50,6 +50,14 @@
                     </descriptorRefs>
                     <finalName>neptunusz</finalName>
                 </configuration>
+                  <executions>
+                    <execution>
+                        <goals>
+                            <goal>assembly</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
