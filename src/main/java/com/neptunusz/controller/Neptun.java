@@ -44,7 +44,7 @@ public class Neptun {
                 .build();
     }
 
-    public void login(String username, String password) {
+    public boolean login(String username, String password) {
         try {
             HttpUriRequest login = RequestBuilder.post()
                     .setUri("https://frame.neptun.bme.hu/hallgatoi/Login.aspx/CheckLoginEnable")
@@ -58,15 +58,18 @@ public class Neptun {
             if (responseString.contains("True")) {
                 System.out.println("Bejelentkezve: " + username);
                 loggedIn = true;
+                return true;
             } else if (responseString.contains("Nincs szabad hely")) {
                 System.out.println("Nincs szabad hely, próbálkozás újra");
-                login(username, password);
+                return false;
             } else {
                 System.out.println("Rossz felhasználónév, vagy jelszó");
+                return false;
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return false;
     }
 
     public void register(Subject subject) {

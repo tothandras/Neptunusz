@@ -69,7 +69,10 @@ public class SubjectService {
 
         Neptun neptun = new Neptun();
 
-        neptun.login(username, password);
+        boolean loggedIn = false;
+        while(!loggedIn) {
+            loggedIn = neptun.login(username, password);
+        }
 
         for (Subject subject : subjects) {
             neptun.register(subject);
